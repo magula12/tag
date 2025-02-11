@@ -1,0 +1,85 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    text-align: center;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 15px; /* Reduced padding for smaller box */
+    max-width: 800px;
+    width: 100%;
+}
+
+.title {
+    font-size: 2.2em; /* Slightly smaller title */
+    margin-bottom: 20px;
+    color: #2b2d42;
+}
+
+.leaderboard {
+    font-size: 1.1em; /* Slightly smaller font */
+}
+
+.leaderboard div {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px; /* Reduced padding */
+    margin: 8px 0; /* Slightly smaller margin */
+    background-color: #f0f4f8;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.leaderboard div:hover {
+    background-color: #e0e4e8;
+}
+
+.leaderboard div span {
+    flex: 1;
+}
+
+.last-caught {
+    background-color: red !important;
+    color: white !important;
+    font-weight: bold;
+}
+
+
+span:nth-child(1) {
+    font-weight: bold;
+    color: #f28d35;  /* Gold color for rank */
+}
+
+span:nth-child(2) {
+    font-weight: bold;
+    color: #1d3557;  /* Dark Blue for player name */
+}
+
+span:nth-child(3) {
+    font-weight: normal;
+    color: #4a4e69;  /* Muted text for time */
+}
+
+@media (max-width: 600px) {
+    .title {
+        font-size: 2em; /* Slightly smaller title for mobile */
+    }
+
+    .leaderboard div {
+        font-size: 1em; /* Smaller font for mobile */
+    }
+}
