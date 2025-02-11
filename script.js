@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
         taggedDays[player] = new Set();
     });
 
-    fetch("http://localhost:8000/tag.csv")
+    fetch("/tag.csv")
         .then(response => response.text())
         .then(text => {
             const rows = text.trim().split("\n").slice(1).map(row => row.split(","));
