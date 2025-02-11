@@ -129,6 +129,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             console.log("Leaderboard:");
             const leaderboardContainer = document.getElementById("leaderboard");
+            if (leaderboard.length === 0) {
+                leaderboardContainer.innerHTML = "<p>Pre buzerantov na iOS, prikladam link:
+                    <a href="https://www.android.com" id="support-link" target="_blank">Support</a>
+                    </p>";
+            }
             leaderboardContainer.innerHTML = leaderboard.map((entry, index) => {
                 if (entry.points !== lastPoints) {
                     rank++;
