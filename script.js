@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
         taggedDays[player] = new Set();
     });
 
-    fetch("tag.csv")
+    fetch("https://magula12.github.io/tag/tag.csv")
         .then(response => response.text())
         .then(text => {
             const rows = text.trim().split("\n").slice(1).map(row => row.split(","));
