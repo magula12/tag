@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         const nextDayStr = nextDay.toISOString().split("T")[0];
 
                         if (!taggedDays[player].has(previousDayStr) && !taggedDays[player].has(nextDayStr)) {
-                            playerPoints[player] += 50;
+                            playerPoints[player] += 35;
                         }
                     }
                 });
