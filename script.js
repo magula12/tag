@@ -201,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function main() {
         initializePlayerData();
 
-        fetch("http://localhost:8000/tag.csv")
+        fetch("https://magula12.github.io/tag/tag.csv")
             .then(response => response.text())
             .then(text => {
                 const data = parseCSVData(text);
