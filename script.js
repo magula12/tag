@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let lastTaggedTimes = {};
     let playerPoints = {};
     let taggedDays = {};
-    let lastCaughtPlayer = null; 
+    let lastCaughtPlayer = null;
 
     players.forEach(player => {
         playerData[player] = 0;
@@ -76,8 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     case 3: pointsAwarded = 30; break;
                     case 4: pointsAwarded = 20; break;
                     case 5: pointsAwarded = 10; break;
-                    case 6: pointsAwarded = 5; break;
-                    default: pointsAwarded = 0; break;
+                    default: pointsAwarded = 5; break;
                 }
 
                 playerPoints[newHolder] += pointsAwarded;
@@ -96,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const allDays = new Set(data.map(entry => entry.DATETIME.toISOString().split("T")[0]));
-            
+
             allDays.forEach(day => {
                 players.forEach(player => {
                     if (!taggedDays[player].has(day)) {
@@ -115,38 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
-            const leaderboard = Object.entries(playerPoints)
-                .sort(([, pointsA], [, pointsB]) => pointsB - pointsA)
-                .map(([player, points]) => ({
-                    player,
-                    points: points,
-                    time: formatTime(playerData[player])
-                }));
-
-            let lastPoints = null;
-            let rank = 0;
-            let displayRank = 0;
-
-            console.log("Leaderboard:");
-            const leaderboardContainer = document.getElementById("leaderboard");
-            leaderboardContainer.innerHTML = leaderboard.map((entry, index) => {
-                if (entry.points !== lastPoints) {
-                    rank++;
-                    displayRank = rank;
-                }
-                lastPoints = entry.points;
-
-                console.log(`${displayRank}. ${entry.player} - Points: ${entry.points} | Time: ${entry.time}`);
-
-                return `
-                    <div class="leaderboard-entry ${entry.player === lastCaughtPlayer ? 'last-caught' : ''}" style="top: ${index * 30}px;">
-                        <span>${displayRank}.</span>
-                        <span>${entry.player}</span>
-                        <span>Points: ${entry.points}</span>
-                        <span>Time: ${entry.time}</span>
-                    </div>
-                `;
-            }).join("");
+            updateLeaderboard();
         })
         .catch(error => console.error("Error loading the file:", error));
 
@@ -163,4 +131,49 @@ document.addEventListener("DOMContentLoaded", () => {
     function pad(num) {
         return num < 10 ? `0${num}` : num;
     }
+
+    function updateLeaderboard() {
+        const leaderboard = Object.entries(playerPoints)
+            .sort(([, pointsA], [, pointsB]) => pointsB - pointsA)
+            .map(([player, points]) => ({
+                player,
+                points: points,
+                time: formatTime(playerData[player])
+            }));
+
+        let lastPoints = null;
+        let rank = 0;
+        let displayRank = 0;
+
+        console.log("Leaderboard:");
+        const leaderboardContainer = document.getElementById("leaderboard");
+        leaderboardContainer.innerHTML = leaderboard.map((entry, index) => {
+            if (entry.points !== lastPoints) {
+                rank++;
+                displayRank = rank;
+            }
+            lastPoints = entry.points;
+
+            console.log(`${displayRank}. ${entry.player} - Points: ${entry.points} | Time: ${entry.time}`);
+
+            return `
+                <div class="leaderboard-entry ${entry.player === lastCaughtPlayer ? 'last-caught' : ''}" style="top: ${index * 30}px;">
+                    <span>${displayRank}.</span>
+                    <span>${entry.player}</span>
+                    <span>Points: ${entry.points}</span>
+                    <span>Time: ${entry.time}</span>
+                </div>
+            `;
+        }).join("");
+    }
+
+    // **Interval na aktualizáciu času každú sekundu**
+    setInterval(() => {
+        const now = new Date();
+        if (lastCaughtPlayer && lastTaggedTimes[lastCaughtPlayer]) {
+            playerData[lastCaughtPlayer] += (now - lastTaggedTimes[lastCaughtPlayer]);
+            lastTaggedTimes[lastCaughtPlayer] = now; // Aktualizácia posledného označenia na teraz
+        }
+        updateLeaderboard();
+    }, 1000); // Každú sekundu sa aktualizuje
 });
