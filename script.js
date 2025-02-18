@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
             achievements.push(`<div>Last Caught Player: <span>${lastCaughtPlayer}</span></div>`);
         }
 
-        achievements.push(`<div>Special achievements: <span>Marek Magula</span> caught naked<span>Jakub Novák</span></div>`);
+        achievements.push(`<div>Special achievements: <span>Marek Magula</span> caught naked <span>Jakub Novák</span></div>`);
 
         return achievements.join("");
     }
