@@ -112,6 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
       let row = document.getElementById(`leaderboard-${player}`);
 
       if (!row) {
+        // 🆕 Create row only if it does not exist
         row = document.createElement("div");
         row.id = `leaderboard-${player}`;
         row.className = "leaderboard-entry";
@@ -123,6 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
         leaderboardContainer.appendChild(row);
       } else {
+        // ✏️ Update existing row instead of replacing it
         row.querySelector(".rank").textContent = `${index + 1}.`;
         row.querySelector(".points-value").textContent = points;
         row.querySelector(".time-value").textContent = timeHeld;
