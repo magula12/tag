@@ -44,13 +44,12 @@ window.addEventListener("load", function () {
 
       const [date, time, player] = parts;
       const currentYear = 2025;
-      const [day, month] = date.split(".").map(Number);
-      const [hour, minute, second] = time.split(":").map(Number);
-
-      const timeTagged = new Date(currentYear, month - 1, day, hour, minute, second);
+      const [day, month] = date.split(".");
+      const formattedDateString = `${month}-${day}-${currentYear} ${time}`;
+      const timeTagged = new Date(formattedDateString);
 
       if (isNaN(timeTagged.getTime())) {
-        console.error("Invalid date:", date, time);
+        console.error("Invalid date:", formattedDateString);
         return null;
       }
 
@@ -81,7 +80,6 @@ window.addEventListener("load", function () {
     const timeDiff = currentEntry.DATETIME - previousEntry.DATETIME;
 
     playerData[previousPlayer] += timeDiff;
-
     const hoursHeld = Math.floor(timeDiff / (1000 * 60 * 60));
     playerPoints[previousPlayer] -= hoursHeld * TIME_PENALTY_PER_HOUR;
 
@@ -106,6 +104,9 @@ window.addEventListener("load", function () {
 
   function updateLeaderboard() {
     const leaderboardContainer = document.getElementById("leaderboard");
+
+    if (!leaderboardContainer) return;
+
     const sortedLeaderboard = Object.entries(playerPoints)
       .sort((a, b) => b[1] - a[1]);
 
