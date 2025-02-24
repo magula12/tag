@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Constants for points and time rules
   const TAG_AWARD_POINTS = [50, 40, 30, 20, 10, 5];
   const TIME_PENALTY_PER_HOUR = 5;
   const BONUS_UNTAGGED_DAY = 35;
