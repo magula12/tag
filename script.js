@@ -1,4 +1,4 @@
-window.addEventListener("load", function () {
+document.addEventListener("DOMContentLoaded", () => {
   // Constants for points and time rules
   const TAG_AWARD_POINTS = [50, 40, 30, 20, 10, 5];
   const TIME_PENALTY_PER_HOUR = 5; // points deducted per full hour held
@@ -20,7 +20,7 @@ window.addEventListener("load", function () {
 
   // Initialize player data
   function initializePlayerData() {
-    players.forEach(function (player) {
+    players.forEach(player => {
       playerData[player] = 0;
       playerPoints[player] = 0;
       lastTaggedTimes[player] = 0;
@@ -41,7 +41,7 @@ window.addEventListener("load", function () {
 
   // Pad single-digit numbers with a leading zero
   function pad(num) {
-    return num < 10 ? "0" + num : num;
+    return num < 10 ? `0${num}` : num;
   }
 
   // Parse CSV data into structured objects
@@ -50,26 +50,21 @@ window.addEventListener("load", function () {
       .trim()
       .split("\n")
       .slice(1)
-      .map(function (row) {
-        const parts = row.split(",").map(function (item) {
-          return item.trim();
-        });
-        const [date, time, player] = parts;
+      .map(row => {
+        const [date, time, player] = row.split(",").map(item => item.trim());
         const currentYear = 2025;
         const [day, month] = date.split(".");
-        const formattedDateString = month + "-" + day + "-" + currentYear + " " + time;
+        const formattedDateString = `${month}-${day}-${currentYear} ${time}`;
         const timeTagged = new Date(formattedDateString);
 
         if (isNaN(timeTagged)) {
-          console.error("Invalid date and time: " + formattedDateString);
+          console.error(`Invalid date and time: ${formattedDateString}`);
           return null;
         }
 
         return { DATETIME: timeTagged, MENO: player };
       })
-      .filter(function (entry) {
-        return entry !== null;
-      });
+      .filter(entry => entry !== null);
   }
 
   // Process a single tag transition from previousEntry to currentEntry
@@ -87,13 +82,11 @@ window.addEventListener("load", function () {
     playerPoints[previousPlayer] -= penalty;
 
     // Award points to the new tag holder based on current ranking
-    const rankedLeaderboard = Object.entries(playerData).sort(function (a, b) {
-      return b[1] - a[1];
-    });
+    const rankedLeaderboard = Object.entries(playerData).sort(
+      ([, timeA], [, timeB]) => timeB - timeA
+    );
     const taggedPlayerRank =
-      rankedLeaderboard.findIndex(function (item) {
-        return item[0] === previousPlayer;
-      }) + 1;
+      rankedLeaderboard.findIndex(([player]) => player === previousPlayer) + 1;
     const pointsAwarded = TAG_AWARD_POINTS[taggedPlayerRank - 1] || 0;
     playerPoints[newHolder] += pointsAwarded;
 
@@ -107,12 +100,10 @@ window.addEventListener("load", function () {
   // Award bonus points for untagged days based on specific rules
   function awardBonusForUntaggedDays(data) {
     const allDays = new Set(
-      data.map(function (entry) {
-        return entry.DATETIME.toISOString().split("T")[0];
-      })
+      data.map(entry => entry.DATETIME.toISOString().split("T")[0])
     );
-    allDays.forEach(function (day) {
-      players.forEach(function (player) {
+    allDays.forEach(day => {
+      players.forEach(player => {
         if (!taggedDays[player].has(day)) {
           const previousDay = new Date(day);
           previousDay.setDate(previousDay.getDate() - 1);
@@ -123,7 +114,10 @@ window.addEventListener("load", function () {
           const nextDayStr = nextDay.toISOString().split("T")[0];
 
           // Award bonus if the player was not tagged on the previous or next day
-          if (!taggedDays[player].has(previousDayStr) && !taggedDays[player].has(nextDayStr)) {
+          if (
+            !taggedDays[player].has(previousDayStr) &&
+            !taggedDays[player].has(nextDayStr)
+          ) {
             playerPoints[player] += BONUS_UNTAGGED_DAY;
           }
         }
@@ -133,15 +127,13 @@ window.addEventListener("load", function () {
 
   // Process all CSV data entries to update stats and points
   function processData(data) {
-    data.sort(function (a, b) {
-      return a.DATETIME - b.DATETIME;
-    });
+    data.sort((a, b) => a.DATETIME - b.DATETIME);
 
-    var lastEntry = data[0];
+    let lastEntry = data[0];
     lastTaggedTimes[lastEntry.MENO] = lastEntry.DATETIME;
     lastCaughtPlayer = lastEntry.MENO;
 
-    for (var i = 1; i < data.length; i++) {
+    for (let i = 1; i < data.length; i++) {
       processTransition(lastEntry, data[i]);
       lastEntry = data[i];
       lastTaggedTimes[lastEntry.MENO] = lastEntry.DATETIME;
@@ -154,195 +146,140 @@ window.addEventListener("load", function () {
   // Generate HTML for the leaderboard display
   function generateLeaderboard() {
     const leaderboard = Object.entries(playerPoints)
-      .sort(function (a, b) {
-        return b[1] - a[1];
-      })
-      .map(function (item) {
-        return {
-          player: item[0],
-          points: item[1],
-          time: formatTime(playerData[item[0]])
-        };
-      });
+      .sort(([, pointsA], [, pointsB]) => pointsB - pointsA)
+      .map(([player, points]) => ({
+        player,
+        points,
+        time: formatTime(playerData[player])
+      }));
 
-    var lastPoints = null;
-    var rank = 0;
-    var displayRank = 0;
+    let lastPoints = null;
+    let rank = 0;
+    let displayRank = 0;
 
     return leaderboard
-      .map(function (entry, index) {
+      .map((entry, index) => {
         if (entry.points !== lastPoints) {
           rank++;
           displayRank = rank;
         }
         lastPoints = entry.points;
 
-        return (
-          '<div class="leaderboard-entry ' +
-          (entry.player === lastCaughtPlayer ? "last-caught" : "") +
-          '">' +
-          "<span>" + displayRank + ".</span>" +
-          "<span>" + entry.player + "</span>" +
-          "<span>Points: " + entry.points + "</span>" +
-          "<span>Time: " + entry.time + "</span>" +
-          "</div>"
-        );
+        return `
+          <div class="leaderboard-entry ${
+            entry.player === lastCaughtPlayer ? "last-caught" : ""
+          }" style="top: ${index * 30}px;">
+            <span>${displayRank}.</span>
+            <span>${entry.player}</span>
+            <span>Points: ${entry.points}</span>
+            <span>Time: ${entry.time}</span>
+          </div>
+        `;
       })
       .join("");
   }
 
   // Calculate and generate the achievements HTML
   function calculateAchievements(data) {
-    var achievements = [];
+    const achievements = [];
 
     // Worst Player (lowest points)
-    var worstPlayer = Object.entries(playerPoints).sort(function (a, b) {
-      return a[1] - b[1];
-    })[0];
+    const worstPlayer = Object.entries(playerPoints).sort(
+      ([, pointsA], [, pointsB]) => pointsA - pointsB
+    )[0];
     achievements.push(
-      '<div>Worst Player: <span>' +
-        worstPlayer[0] +
-        '</span> with ' +
-        worstPlayer[1] +
-        " points</div>"
+      `<div>Worst Player: <span>${worstPlayer[0]}</span> with ${worstPlayer[1]} points</div>`
     );
 
     // Fastest Player (least time held)
-    var fastestPlayer = Object.entries(playerData).sort(function (a, b) {
-      return a[1] - b[1];
-    })[0];
+    const fastestPlayer = Object.entries(playerData).sort(
+      ([, timeA], [, timeB]) => timeA - timeB
+    )[0];
     achievements.push(
-      '<div>Fastest Player: <span>' +
-        fastestPlayer[0] +
-        '</span> with ' +
-        formatTime(fastestPlayer[1]) +
-        "</div>"
+      `<div>Fastest Player: <span>${fastestPlayer[0]}</span> with ${formatTime(
+        fastestPlayer[1]
+      )}</div>`
     );
 
     // Slowest Player (most time held)
-    var slowestPlayer = Object.entries(playerData).sort(function (a, b) {
-      return b[1] - a[1];
-    })[0];
+    const slowestPlayer = Object.entries(playerData).sort(
+      ([, timeA], [, timeB]) => timeB - timeA
+    )[0];
     achievements.push(
-      '<div>Slowest Player: <span>' +
-        slowestPlayer[0] +
-        '</span> with ' +
-        formatTime(slowestPlayer[1]) +
-        "</div>"
+      `<div>Slowest Player: <span>${slowestPlayer[0]}</span> with ${formatTime(
+        slowestPlayer[1]
+      )}</div>`
     );
 
     // Fastest Catch (shortest time between tags)
-    var fastestCatch = Infinity;
-    var fastestCatchDetails = "";
-    for (var i = 1; i < data.length; i++) {
-      var timeDiff = data[i].DATETIME - data[i - 1].DATETIME;
+    let fastestCatch = Infinity;
+    let fastestCatchDetails = "";
+    for (let i = 1; i < data.length; i++) {
+      const timeDiff = data[i].DATETIME - data[i - 1].DATETIME;
       if (timeDiff < fastestCatch) {
         fastestCatch = timeDiff;
-        fastestCatchDetails =
-          data[i].MENO +
-          " caught " +
-          data[i - 1].MENO +
-          " in " +
-          formatTime(timeDiff);
+        fastestCatchDetails = `${data[i].MENO} caught ${data[i - 1].MENO} in ${formatTime(timeDiff)}`;
       }
     }
     achievements.push(
-      '<div>Fastest Catch: <span>' + fastestCatchDetails + "</span></div>"
+      `<div>Fastest Catch: <span>${fastestCatchDetails}</span></div>`
     );
 
     // Slowest Catch (longest time between tags)
-    var slowestCatch = 0;
-    var slowestCatchDetails = "";
-    for (i = 1; i < data.length; i++) {
-      timeDiff = data[i].DATETIME - data[i - 1].DATETIME;
+    let slowestCatch = 0;
+    let slowestCatchDetails = "";
+    for (let i = 1; i < data.length; i++) {
+      const timeDiff = data[i].DATETIME - data[i - 1].DATETIME;
       if (timeDiff > slowestCatch) {
         slowestCatch = timeDiff;
-        slowestCatchDetails =
-          data[i - 1].MENO +
-          " caught " +
-          data[i].MENO +
-          " in " +
-          formatTime(timeDiff);
+        slowestCatchDetails = `${data[i - 1].MENO} caught ${data[i].MENO} in ${formatTime(timeDiff)}`;
       }
     }
     achievements.push(
-      '<div>Slowest Catch: <span>' + slowestCatchDetails + "</span></div>"
+      `<div>Slowest Catch: <span>${slowestCatchDetails}</span></div>`
     );
 
     // Last Caught Player
     if (lastCaughtPlayer) {
       achievements.push(
-        '<div>Last Caught Player: <span>' +
-          lastCaughtPlayer +
-          "</span></div>"
+        `<div>Last Caught Player: <span>${lastCaughtPlayer}</span></div>`
       );
     }
 
     // Special achievement example
     achievements.push(
-      '<div>Special achievements: <span>Marek Magula</span> caught naked <span>Jakub Novák</span></div>'
+      `<div>Special achievements: <span>Marek Magula</span> caught naked <span>Jakub Novák</span></div>`
     );
 
     return achievements.join("");
-  }
-
-  // Helper to load CSV data with a fallback for older iOS browsers
-  function getCSVData(url, callback) {
-    if (window.fetch) {
-      fetch(url)
-        .then(function (response) {
-          return response.text();
-        })
-        .then(function (text) {
-          callback(null, text);
-        })
-        .catch(function (err) {
-          callback(err, null);
-        });
-    } else {
-      // Fallback for browsers that do not support fetch
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", url, true);
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            callback(null, xhr.responseText);
-          } else {
-            callback(new Error("Failed to load CSV data"), null);
-          }
-        }
-      };
-      xhr.send();
-    }
   }
 
   // Main function to load CSV data and update the leaderboard and achievements
   function main() {
     initializePlayerData();
 
-    getCSVData("https://magula12.github.io/tag/tag.csv", function (err, text) {
-      if (err) {
-        console.error("Error loading the file:", err);
-        return;
-      }
-      var data = parseCSVData(text);
-      processData(data);
+    fetch("https://magula12.github.io/tag/tag.csv")
+      .then(response => response.text())
+      .then(text => {
+        const data = parseCSVData(text);
+        processData(data);
 
-      var leaderboardContainer = document.getElementById("leaderboard");
-      leaderboardContainer.innerHTML = generateLeaderboard();
+        const leaderboardContainer = document.getElementById("leaderboard");
+        leaderboardContainer.innerHTML = generateLeaderboard();
 
-      var achievementsList = document.getElementById("achievements-list");
-      achievementsList.innerHTML = calculateAchievements(data);
-    });
+        const achievementsList = document.getElementById("achievements-list");
+        achievementsList.innerHTML = calculateAchievements(data);
+      })
+      .catch(error => console.error("Error loading the file:", error));
 
     // Automatically update the time for the last caught player every second
-    setInterval(function () {
-      var now = new Date();
+    setInterval(() => {
+      const now = new Date();
       if (lastCaughtPlayer && lastTaggedTimes[lastCaughtPlayer]) {
-        playerData[lastCaughtPlayer] += now - lastTaggedTimes[lastCaughtPlayer];
+        playerData[lastCaughtPlayer] += (now - lastTaggedTimes[lastCaughtPlayer]);
         lastTaggedTimes[lastCaughtPlayer] = now;
       }
-      var leaderboardContainer = document.getElementById("leaderboard");
+      const leaderboardContainer = document.getElementById("leaderboard");
       leaderboardContainer.innerHTML = generateLeaderboard();
     }, UPDATE_INTERVAL_MS);
   }
