@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const TIME_PENALTY_PER_HOUR = 5; // points deducted per full hour held
   const BONUS_UNTAGGED_DAY = 35; // bonus points for being untagged on isolated days
   const UPDATE_INTERVAL_MS = 1000;
-  // Countdown target (preset to February 28, 2025). Edit this constant as needed.
+  // Countdown target (preset to February 28, 2025). Edit as needed.
   const COUNTDOWN_TARGET = new Date("2025-02-28T23:59:59");
 
   const players = [
@@ -24,14 +24,14 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
 
   // Data storage objects
-  let playerData = {}; // holds total time (ms) each player held the tag
-  let lastTaggedTimes = {}; // last update time for each player holding the tag
-  let playerPoints = {}; // cumulative points per player
-  let taggedDays = {}; // record of days each player was tagged (ISO date strings)
-  let playerCatchCounts = {}; // how many times each player was caught
+  let playerData = {};       // total time (ms) each player held the tag
+  let lastTaggedTimes = {};  // last update time for each player holding the tag
+  let playerPoints = {};     // cumulative points per player
+  let taggedDays = {};       // record of days each player was tagged (ISO date strings)
+  let playerCatchCounts = {}; // number of times each player was caught
   let lastCaughtPlayer = null;
 
-  // Initialize player data
+  // Initialize player data for all players
   function initializePlayerData() {
     players.forEach((player) => {
       playerData[player] = 0;
@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* 
     New time formatter:
     - If time is at least 1 day, display "Xd Yh Zm"
-    - Else if time is at least 1 hour, display "X hour(s) Y min(s)"
+    - Else if at least 1 hour, display "X hour(s) Y min(s)"
     - Else if at least one minute, display "Y min(s)"
     - Otherwise, display "Z sec(s)"
   */
@@ -67,8 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Parse CSV data into structured objects
-  // Expected CSV format:
+  // Parse TXT data (comma-separated) into structured objects.
+  // Expected format:
   // DEŇ,ČAS,MENO
   // 1.2.,0:00,Jakub Novak
   // 2.2.,20:49,Marek Simko
@@ -77,12 +77,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return text
       .trim()
       .split("\n")
-      .slice(1)
+      .slice(1) // Skip header row
       .map((row) => {
-        const [date, time, player] = row.split(",").map((item) => item.trim());
+        const [date, time, player] = row.split(",").map(item => item.trim());
         const currentYear = 2025;
         const [day, month] = date.split(".");
-        // Format date as "month-day-year time" for parsing
+        // Create a string like "month-day-year time" for parsing.
         const formattedDateString = `${month}-${day}-${currentYear} ${time}`;
         const timeTagged = new Date(formattedDateString);
         if (isNaN(timeTagged)) {
@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         return { DATETIME: timeTagged, MENO: player };
       })
-      .filter((entry) => entry !== null);
+      .filter(entry => entry !== null);
   }
 
   // Process a single tag transition from previousEntry to currentEntry
@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const penalty = hoursHeld * TIME_PENALTY_PER_HOUR;
     playerPoints[previousPlayer] -= penalty;
 
-    // Award points to the new tag holder based on the ranking of the previous player's hold time
+    // Award points to the new tag holder based on the ranking of previous player's hold time
     const rankedLeaderboard = Object.entries(playerData).sort(
       ([, timeA], [, timeB]) => timeB - timeA
     );
@@ -128,25 +128,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Award bonus points for untagged days based on specific rules
   function awardBonusForUntaggedDays(data) {
-    const allDays = new Set(
-      data.map((entry) => entry.DATETIME.toISOString().split("T")[0])
-    );
+    const allDays = new Set(data.map(entry => entry.DATETIME.toISOString().split("T")[0]));
     allDays.forEach((day) => {
       players.forEach((player) => {
         if (!taggedDays[player].has(day)) {
           const previousDay = new Date(day);
           previousDay.setDate(previousDay.getDate() - 1);
           const previousDayStr = previousDay.toISOString().split("T")[0];
-
           const nextDay = new Date(day);
           nextDay.setDate(nextDay.getDate() + 1);
           const nextDayStr = nextDay.toISOString().split("T")[0];
-
           // Award bonus if the player was not tagged on the previous or next day
-          if (
-            !taggedDays[player].has(previousDayStr) &&
-            !taggedDays[player].has(nextDayStr)
-          ) {
+          if (!taggedDays[player].has(previousDayStr) && !taggedDays[player].has(nextDayStr)) {
             playerPoints[player] += BONUS_UNTAGGED_DAY;
           }
         }
@@ -154,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Process all CSV data entries to update stats and points
+  // Process all TXT data entries to update stats and points
   function processData(data) {
     data.sort((a, b) => a.DATETIME - b.DATETIME);
     let lastEntry = data[0];
@@ -182,24 +175,22 @@ document.addEventListener("DOMContentLoaded", () => {
     let lastPoints = null;
     let rank = 0;
     let displayRank = 0;
-    return leaderboard
-      .map((entry) => {
-        if (entry.points !== lastPoints) {
-          rank++;
-          displayRank = rank;
-        }
-        lastPoints = entry.points;
-        return `
-          <div class="leaderboard-entry ${entry.player === lastCaughtPlayer ? "last-caught" : ""}">
-            <span class="rank">${displayRank}.</span>
-            <span class="player">${entry.player}</span>
-            <span class="points">Points: ${entry.points}</span>
-            <span class="time">Time: ${entry.time}</span>
-            <span class="catches">Caught: ${entry.catches}</span>
-          </div>
-        `;
-      })
-      .join("");
+    return leaderboard.map((entry) => {
+      if (entry.points !== lastPoints) {
+        rank++;
+        displayRank = rank;
+      }
+      lastPoints = entry.points;
+      return `
+        <div class="leaderboard-entry ${entry.player === lastCaughtPlayer ? "last-caught" : ""}">
+          <span class="rank">${displayRank}.</span>
+          <span class="player">${entry.player}</span>
+          <span class="points">Points: ${entry.points}</span>
+          <span class="time">Time: ${entry.time}</span>
+          <span class="catches">Caught: ${entry.catches}</span>
+        </div>
+      `;
+    }).join("");
   }
 
   // Calculate and generate the achievements HTML
@@ -286,10 +277,11 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(updateCountdown, 1000);
   updateCountdown();
 
-  // Main function: load CSV data and update leaderboard & achievements
+  // Main function: load TXT data and update leaderboard & achievements
   function main() {
     initializePlayerData();
-    fetch("https://magula12.github.io/tag/tag.txt")
+    // Use a cache-busting query parameter (?v=1) and point to your .txt file.
+    fetch("https://magula12.github.io/tag/tag.txt?v=1")
       .then((response) => response.text())
       .then((text) => {
         const data = parseCSVData(text);
