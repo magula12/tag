@@ -251,7 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
       achievements.push(
         `<div>
         Special achievements: <span>Marek Magula</span> caught naked <span>Jakub Novák</span><br>
-        <span>Jakub Huščava</span> was caught by <span>Superman(Brečkis) &amp; Spiderman(Nováčik)</span>
+        <span>Jakub Huščava</span> was caught by <span>Superman(Brečkis) &amp; Spiderman(Nováčik)</span><br>
         <span>Adam Šesták</span> for being absolute "hajzel" in the game
         
         </div>`
