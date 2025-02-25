@@ -285,7 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Main function: load CSV data and update leaderboard & achievements
   function main() {
     initializePlayerData();
-    fetch("https://magula12.github.io/tag/tag.csv")
+    fetch("https://magula12.github.io/tag/tag.txt")
       .then((response) => response.text())
       .then((text) => {
         const data = parseCSVData(text);
