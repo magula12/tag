@@ -1,97 +1,78 @@
-document.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("load", function () {
   // Constants for points and time rules
   const TAG_AWARD_POINTS = [50, 40, 30, 20, 10, 5];
   const TIME_PENALTY_PER_HOUR = 5; // points deducted per full hour held
   const BONUS_UNTAGGED_DAY = 35; // bonus points for being untagged on isolated days
   const UPDATE_INTERVAL_MS = 1000;
-  // Countdown target (preset to February 28, 2025). Edit as needed.
-  const COUNTDOWN_TARGET = new Date("2025-02-28T23:59:59");
 
   const players = [
-    "Tomas Magula",
-    "Marek Magula",
-    "Jakub Novak",
-    "Marek Simko",
-    "Jan Brecka",
-    "Adam Sestak",
-    "Janik Mokry",
-    "Beno Drabek",
-    "Pavol Nagy",
-    "Marek Kossey",
-    "Jakub Huscava",
-    "Niko Matejov",
-    "Radek Ciernik"
+    "Tomas Magula", "Marek Magula", "Jakub Novak", "Marek Simko", "Jan Brecka",
+    "Adam Sestak", "Janik Mokry", "Beno Drabek", "Pavol Nagy", "Marek Kossey",
+    "Jakub Huscava", "Niko Matejov", "Radek Ciernik"
   ];
 
   // Data storage objects
-  let playerData = {};       // total time (ms) each player held the tag
-  let lastTaggedTimes = {};  // last update time for each player holding the tag
-  let playerPoints = {};     // cumulative points per player
-  let taggedDays = {};       // record of days each player was tagged (ISO date strings)
-  let playerCatchCounts = {}; // number of times each player was caught
+  let playerData = {};      // holds total time (ms) each player held the tag
+  let lastTaggedTimes = {}; // last update time for each player holding the tag
+  let playerPoints = {};    // cumulative points per player
+  let taggedDays = {};      // record of days each player was tagged (ISO date strings)
   let lastCaughtPlayer = null;
 
-  // Initialize player data for all players
+  // Initialize player data
   function initializePlayerData() {
-    players.forEach((player) => {
+    players.forEach(function (player) {
       playerData[player] = 0;
       playerPoints[player] = 0;
       lastTaggedTimes[player] = 0;
       taggedDays[player] = new Set();
-      playerCatchCounts[player] = 0;
     });
   }
 
-  /* 
-    New time formatter:
-    - If time is at least 1 day, display "Xd Yh Zm"
-    - Else if at least 1 hour, display "X hour(s) Y min(s)"
-    - Else if at least one minute, display "Y min(s)"
-    - Otherwise, display "Z sec(s)"
-  */
+  // Format time in HH:MM:SS
   function formatTime(ms) {
-    const totalSeconds = Math.floor(ms / 1000);
-    const days = Math.floor(totalSeconds / 86400);
-    const hours = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    if (days > 0) {
-      return `${days}d ${hours}h ${minutes}m`;
-    } else if (hours > 0) {
-      return `${hours} hour${hours === 1 ? "" : "s"} ${minutes} min${minutes === 1 ? "" : "s"}`;
-    } else if (minutes > 0) {
-      return `${minutes} min${minutes === 1 ? "" : "s"}`;
-    } else {
-      return `${seconds} sec${seconds === 1 ? "" : "s"}`;
-    }
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    const remainingSeconds = seconds % 60;
+    return `${pad(hours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
   }
 
-  // Parse TXT data (comma-separated) into structured objects.
-  // Expected format:
-  // DEŇ,ČAS,MENO
-  // 1.2.,0:00,Jakub Novak
-  // 2.2.,20:49,Marek Simko
-  // ...
+  // Pad single-digit numbers with a leading zero
+  function pad(num) {
+    return num < 10 ? "0" + num : num;
+  }
+
+  // Parse TXT data (same comma-separated format)
   function parseCSVData(text) {
     return text
       .trim()
       .split("\n")
-      .slice(1) // Skip header row
-      .map((row) => {
-        const [date, time, player] = row.split(",").map(item => item.trim());
+      .slice(1) // skip header
+      .map(function (row) {
+        const parts = row.split(",").map(function (item) {
+          return item.trim();
+        });
+        const [date, time, player] = parts;
         const currentYear = 2025;
-        const [day, month] = date.split(".");
-        // Create a string like "month-day-year time" for parsing.
-        const formattedDateString = `${month}-${day}-${currentYear} ${time}`;
-        const timeTagged = new Date(formattedDateString);
+        // Split the date and remove empty strings (handles "1.2." properly)
+        const dateParts = date.split(".").filter(Boolean);
+        const day = dateParts[0];
+        const month = dateParts[1];
+        // Create an ISO formatted string (YYYY-MM-DDTHH:MM) for compatibility
+        const isoDateString = `${currentYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${time}`;
+        const timeTagged = new Date(isoDateString);
+
         if (isNaN(timeTagged)) {
-          console.error(`Invalid date and time: ${formattedDateString}`);
+          console.error("Invalid date and time: " + isoDateString);
           return null;
         }
+
         return { DATETIME: timeTagged, MENO: player };
       })
-      .filter(entry => entry !== null);
+      .filter(function (entry) {
+        return entry !== null;
+      });
   }
 
   // Process a single tag transition from previousEntry to currentEntry
@@ -102,20 +83,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Update holding time for the previous player
     playerData[previousPlayer] += timeDiff;
-    // Increment catch count for the previous player (they were caught)
-    playerCatchCounts[previousPlayer]++;
 
-    // Deduct penalty based on full hours held
+    // Deduct penalty based on hours held
     const hoursHeld = Math.floor(timeDiff / (1000 * 60 * 60));
     const penalty = hoursHeld * TIME_PENALTY_PER_HOUR;
     playerPoints[previousPlayer] -= penalty;
 
-    // Award points to the new tag holder based on the ranking of previous player's hold time
-    const rankedLeaderboard = Object.entries(playerData).sort(
-      ([, timeA], [, timeB]) => timeB - timeA
-    );
+    // Award points to the new tag holder based on current ranking
+    const rankedLeaderboard = Object.entries(playerData).sort(function (a, b) {
+      return b[1] - a[1];
+    });
     const taggedPlayerRank =
-      rankedLeaderboard.findIndex(([player]) => player === previousPlayer) + 1;
+      rankedLeaderboard.findIndex(function (item) {
+        return item[0] === previousPlayer;
+      }) + 1;
     const pointsAwarded = TAG_AWARD_POINTS[taggedPlayerRank - 1] || 0;
     playerPoints[newHolder] += pointsAwarded;
 
@@ -128,16 +109,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Award bonus points for untagged days based on specific rules
   function awardBonusForUntaggedDays(data) {
-    const allDays = new Set(data.map(entry => entry.DATETIME.toISOString().split("T")[0]));
-    allDays.forEach((day) => {
-      players.forEach((player) => {
+    const allDays = new Set(
+      data.map(function (entry) {
+        return entry.DATETIME.toISOString().split("T")[0];
+      })
+    );
+    allDays.forEach(function (day) {
+      players.forEach(function (player) {
         if (!taggedDays[player].has(day)) {
           const previousDay = new Date(day);
           previousDay.setDate(previousDay.getDate() - 1);
           const previousDayStr = previousDay.toISOString().split("T")[0];
+
           const nextDay = new Date(day);
           nextDay.setDate(nextDay.getDate() + 1);
           const nextDayStr = nextDay.toISOString().split("T")[0];
+
           // Award bonus if the player was not tagged on the previous or next day
           if (!taggedDays[player].has(previousDayStr) && !taggedDays[player].has(nextDayStr)) {
             playerPoints[player] += BONUS_UNTAGGED_DAY;
@@ -149,161 +136,221 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Process all TXT data entries to update stats and points
   function processData(data) {
-    data.sort((a, b) => a.DATETIME - b.DATETIME);
-    let lastEntry = data[0];
+    data.sort(function (a, b) {
+      return a.DATETIME - b.DATETIME;
+    });
+
+    var lastEntry = data[0];
     lastTaggedTimes[lastEntry.MENO] = lastEntry.DATETIME;
     lastCaughtPlayer = lastEntry.MENO;
-    for (let i = 1; i < data.length; i++) {
+
+    for (var i = 1; i < data.length; i++) {
       processTransition(lastEntry, data[i]);
       lastEntry = data[i];
       lastTaggedTimes[lastEntry.MENO] = lastEntry.DATETIME;
       lastCaughtPlayer = lastEntry.MENO;
     }
+
     awardBonusForUntaggedDays(data);
   }
 
-  // Generate HTML for the leaderboard display including catch counts
+  // Generate HTML for the leaderboard display
   function generateLeaderboard() {
     const leaderboard = Object.entries(playerPoints)
-      .sort(([, pointsA], [, pointsB]) => pointsB - pointsA)
-      .map(([player, points]) => ({
-        player,
-        points,
-        time: formatTime(playerData[player]),
-        catches: playerCatchCounts[player]
-      }));
-    let lastPoints = null;
-    let rank = 0;
-    let displayRank = 0;
-    return leaderboard.map((entry) => {
-      if (entry.points !== lastPoints) {
-        rank++;
-        displayRank = rank;
-      }
-      lastPoints = entry.points;
-      return `
-        <div class="leaderboard-entry ${entry.player === lastCaughtPlayer ? "last-caught" : ""}">
-          <span class="rank">${displayRank}.</span>
-          <span class="player">${entry.player}</span>
-          <span class="points">Points: ${entry.points}</span>
-          <span class="time">Time: ${entry.time}</span>
-          <span class="catches">Caught: ${entry.catches}</span>
-        </div>
-      `;
-    }).join("");
+      .sort(function (a, b) {
+        return b[1] - a[1];
+      })
+      .map(function (item) {
+        return {
+          player: item[0],
+          points: item[1],
+          time: formatTime(playerData[item[0]])
+        };
+      });
+
+    var lastPoints = null;
+    var rank = 0;
+    var displayRank = 0;
+
+    return leaderboard
+      .map(function (entry, index) {
+        if (entry.points !== lastPoints) {
+          rank++;
+          displayRank = rank;
+        }
+        lastPoints = entry.points;
+
+        return (
+          '<div class="leaderboard-entry ' +
+          (entry.player === lastCaughtPlayer ? "last-caught" : "") +
+          '">' +
+          "<span>" + displayRank + ".</span>" +
+          "<span>" + entry.player + "</span>" +
+          "<span>Points: " + entry.points + "</span>" +
+          "<span>Time: " + entry.time + "</span>" +
+          "</div>"
+        );
+      })
+      .join("");
   }
 
   // Calculate and generate the achievements HTML
   function calculateAchievements(data) {
-    const achievements = [];
+    var achievements = [];
+
     // Worst Player (lowest points)
-    const worstPlayer = Object.entries(playerPoints).sort(
-      ([, pointsA], [, pointsB]) => pointsA - pointsB
-    )[0];
+    var worstPlayer = Object.entries(playerPoints).sort(function (a, b) {
+      return a[1] - b[1];
+    })[0];
     achievements.push(
-      `<div>Worst Player: <span>${worstPlayer[0]}</span> with ${worstPlayer[1]} points</div>`
+      '<div>Worst Player: <span>' +
+        worstPlayer[0] +
+        '</span> with ' +
+        worstPlayer[1] +
+        " points</div>"
     );
+
     // Fastest Player (least time held)
-    const fastestPlayer = Object.entries(playerData).sort(
-      ([, timeA], [, timeB]) => timeA - timeB
-    )[0];
+    var fastestPlayer = Object.entries(playerData).sort(function (a, b) {
+      return a[1] - b[1];
+    })[0];
     achievements.push(
-      `<div>Fastest Player: <span>${fastestPlayer[0]}</span> with ${formatTime(fastestPlayer[1])}</div>`
+      '<div>Fastest Player: <span>' +
+        fastestPlayer[0] +
+        '</span> with ' +
+        formatTime(fastestPlayer[1]) +
+        "</div>"
     );
+
     // Slowest Player (most time held)
-    const slowestPlayer = Object.entries(playerData).sort(
-      ([, timeA], [, timeB]) => timeB - timeA
-    )[0];
+    var slowestPlayer = Object.entries(playerData).sort(function (a, b) {
+      return b[1] - a[1];
+    })[0];
     achievements.push(
-      `<div>Slowest Player: <span>${slowestPlayer[0]}</span> with ${formatTime(slowestPlayer[1])}</div>`
+      '<div>Slowest Player: <span>' +
+        slowestPlayer[0] +
+        '</span> with ' +
+        formatTime(slowestPlayer[1]) +
+        "</div>"
     );
+
     // Fastest Catch (shortest time between tags)
-    let fastestCatch = Infinity;
-    let fastestCatchDetails = "";
-    for (let i = 1; i < data.length; i++) {
-      const timeDiff = data[i].DATETIME - data[i - 1].DATETIME;
+    var fastestCatch = Infinity;
+    var fastestCatchDetails = "";
+    for (var i = 1; i < data.length; i++) {
+      var timeDiff = data[i].DATETIME - data[i - 1].DATETIME;
       if (timeDiff < fastestCatch) {
         fastestCatch = timeDiff;
-        fastestCatchDetails = `${data[i].MENO} caught ${data[i - 1].MENO} in ${formatTime(timeDiff)}`;
+        fastestCatchDetails =
+          data[i].MENO +
+          " caught " +
+          data[i - 1].MENO +
+          " in " +
+          formatTime(timeDiff);
       }
     }
-    achievements.push(`<div>Fastest Catch: <span>${fastestCatchDetails}</span></div>`);
+    achievements.push(
+      '<div>Fastest Catch: <span>' + fastestCatchDetails + "</span></div>"
+    );
+
     // Slowest Catch (longest time between tags)
-    let slowestCatch = 0;
-    let slowestCatchDetails = "";
-    for (let i = 1; i < data.length; i++) {
-      const timeDiff = data[i].DATETIME - data[i - 1].DATETIME;
+    var slowestCatch = 0;
+    var slowestCatchDetails = "";
+    for (i = 1; i < data.length; i++) {
+      timeDiff = data[i].DATETIME - data[i - 1].DATETIME;
       if (timeDiff > slowestCatch) {
         slowestCatch = timeDiff;
-        slowestCatchDetails = `${data[i - 1].MENO} caught ${data[i].MENO} in ${formatTime(timeDiff)}`;
+        slowestCatchDetails =
+          data[i - 1].MENO +
+          " caught " +
+          data[i].MENO +
+          " in " +
+          formatTime(timeDiff);
       }
     }
-    achievements.push(`<div>Slowest Catch: <span>${slowestCatchDetails}</span></div>`);
+    achievements.push(
+      '<div>Slowest Catch: <span>' + slowestCatchDetails + "</span></div>"
+    );
+
     // Last Caught Player
     if (lastCaughtPlayer) {
-      achievements.push(`<div>Last Caught Player: <span>${lastCaughtPlayer}</span></div>`);
+      achievements.push(
+        '<div>Last Caught Player: <span>' +
+          lastCaughtPlayer +
+          "</span></div>"
+      );
     }
-    // Special achievements (example)
-    achievements.push(`
-      <div>
-        Special achievements:
-        <span>Marek Magula</span> caught naked <span>Jakub Novák</span><br>
-        <span>Jakub Huščava</span> was caught by <span>Superman(Brečkis) &amp; Spiderman(Nováčik)</span><br>
-        <span>Adam Šesták</span> for being absolute "hajzel" in the game
-      </div>
-    `);
+
+    // Special achievement example
+    achievements.push(
+      '<div>Special achievements: <span>Marek Magula</span> caught naked <span>Jakub Novák</span></div>'
+    );
+
     return achievements.join("");
   }
 
-  // Countdown: update the countdown timer every second
-  function updateCountdown() {
-    const now = new Date();
-    let diff = COUNTDOWN_TARGET - now;
-    if (diff < 0) diff = 0;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    const countdownEl = document.getElementById("countdown");
-    countdownEl.innerHTML = `
-      <div class="countdown-wrapper">
-        <span class="countdown-item">${days}<small>Days</small></span>
-        <span class="countdown-item">${hours}<small>Hours</small></span>
-        <span class="countdown-item">${minutes}<small>Minutes</small></span>
-        <span class="countdown-item">${seconds}<small>Seconds</small></span>
-      </div>
-    `;
+  // Helper to load TXT data with a fallback for older iOS browsers
+  function getCSVData(url, callback) {
+    if (window.fetch) {
+      fetch(url)
+        .then(function (response) {
+          return response.text();
+        })
+        .then(function (text) {
+          callback(null, text);
+        })
+        .catch(function (err) {
+          callback(err, null);
+        });
+    } else {
+      // Fallback for browsers that do not support fetch
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", url, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            callback(null, xhr.responseText);
+          } else {
+            callback(new Error("Failed to load TXT data"), null);
+          }
+        }
+      };
+      xhr.send();
+    }
   }
-  setInterval(updateCountdown, 1000);
-  updateCountdown();
 
-  // Main function: load TXT data and update leaderboard & achievements
+  // Main function to load TXT data and update the leaderboard and achievements
   function main() {
     initializePlayerData();
-    // Use a cache-busting query parameter (?v=1) and point to your .txt file.
-    fetch("https://magula12.github.io/tag/tag.txt?v=1")
-      .then((response) => response.text())
-      .then((text) => {
-        const data = parseCSVData(text);
-        processData(data);
-        const leaderboardContainer = document.getElementById("leaderboard");
-        leaderboardContainer.innerHTML = generateLeaderboard();
-        const achievementsList = document.getElementById("achievements-list");
-        achievementsList.innerHTML = calculateAchievements(data);
-      })
-      .catch((error) => console.error("Error loading the file:", error));
+
+    // Change the file URL to point to your .txt file
+    getCSVData("https://magula12.github.io/tag/tag.txt", function (err, text) {
+      if (err) {
+        console.error("Error loading the file:", err);
+        return;
+      }
+      var data = parseCSVData(text);
+      processData(data);
+
+      var leaderboardContainer = document.getElementById("leaderboard");
+      leaderboardContainer.innerHTML = generateLeaderboard();
+
+      var achievementsList = document.getElementById("achievements-list");
+      achievementsList.innerHTML = calculateAchievements(data);
+    });
 
     // Automatically update the time for the last caught player every second
-    setInterval(() => {
-      const now = new Date();
+    setInterval(function () {
+      var now = new Date();
       if (lastCaughtPlayer && lastTaggedTimes[lastCaughtPlayer]) {
         playerData[lastCaughtPlayer] += now - lastTaggedTimes[lastCaughtPlayer];
         lastTaggedTimes[lastCaughtPlayer] = now;
       }
-      const leaderboardContainer = document.getElementById("leaderboard");
+      var leaderboardContainer = document.getElementById("leaderboard");
       leaderboardContainer.innerHTML = generateLeaderboard();
     }, UPDATE_INTERVAL_MS);
   }
 
+  // Run the main function
   main();
 });
