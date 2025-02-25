@@ -36,6 +36,37 @@ body {
   color: var(--primary-color);
 }
 
+/* Countdown Styles */
+.countdown {
+  margin: 20px 0;
+  font-size: 1.4em;
+  color: var(--primary-color);
+}
+
+.countdown-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.countdown-item {
+  background-color: var(--accent-color);
+  color: #fff;
+  padding: 10px;
+  border-radius: 5px;
+  font-weight: bold;
+  min-width: 70px;
+  text-align: center;
+}
+
+.countdown-item small {
+  display: block;
+  font-size: 0.7em;
+  font-weight: normal;
+  color: var(--card-bg);
+}
+
+/* Leaderboard Styles */
 .leaderboard {
   font-size: 1.1em;
   margin-top: 20px;
@@ -51,7 +82,6 @@ body {
   transition: background-color 0.3s ease, transform 0.3s ease;
   flex-wrap: wrap;
 }
-
 
 @keyframes fadeIn {
   to { opacity: 1; }
@@ -74,6 +104,9 @@ body {
   50% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
 }
 
+/* Leaderboard span styles:
+   nth-child(1): Rank, nth-child(2): Player, 
+   nth-child(3): Points, nth-child(4): Caught count */
 .leaderboard div span:nth-child(1) {
   font-weight: bold;
   color: var(--accent-color);
@@ -84,7 +117,8 @@ body {
   color: var(--primary-color);
 }
 
-.leaderboard div span:nth-child(3) {
+.leaderboard div span:nth-child(3),
+.leaderboard div span:nth-child(4) {
   font-weight: normal;
   color: #4a4e69;
 }
@@ -103,9 +137,11 @@ body {
   }
   .leaderboard div span:nth-child(1) { font-size: 1.2em; }
   .leaderboard div span:nth-child(2) { font-size: 1.1em; }
-  .leaderboard div span:nth-child(3) { font-size: 1em; }
+  .leaderboard div span:nth-child(3),
+  .leaderboard div span:nth-child(4) { font-size: 1em; }
 }
 
+/* Achievements Styles */
 .achievements {
   margin-top: 30px;
   padding: 20px;
