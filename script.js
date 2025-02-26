@@ -49,9 +49,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
-    if (hours > 0) return `${hours} h ${minutes} m`;
-    if (minutes > 0) return `${minutes} m`;
-    return `${seconds} sec`;
+    if (hours > 0) return ${hours} h ${minutes} m;
+    if (minutes > 0) return ${minutes} m;
+    return ${seconds} sec;
   }
 
   // Parse TXT data
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const timeTagged = new Date(currentYear, month - 1, day, hours, minutes);
 
         if (isNaN(timeTagged)) {
-          console.error(`Invalid date for ${date} ${time}`);
+          console.error(Invalid date for ${date} ${time});
           return null;
         }
         return { DATETIME: timeTagged, MENO: player };
@@ -134,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Generate rules section
   function generateRules() {
-    return `
+    return 
       <div class="rules">
         <h3>Rules for Point Calculation</h3>
         <ul>
@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <li><b>Untagged Bonus:</b> +35 points if not tagged for an isolated day.</li>
         </ul>
       </div>
-    `;
+    ;
   }
 
   // Countdown timer
@@ -165,14 +165,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-    document.getElementById("countdown").innerHTML = `
+    document.getElementById("countdown").innerHTML = 
       <div class="countdown-wrapper">
         <span class="countdown-item">${days}<small>Days</small></span>
         <span class="countdown-item">${hours}<small>Hours</small></span>
         <span class="countdown-item">${minutes}<small>Minutes</small></span>
         <span class="countdown-item">${seconds}<small>Seconds</small></span>
       </div>
-    `;
+    ;
   }
 
   setInterval(updateCountdown, 1000);
@@ -192,4 +192,4 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   main();
-});
+}); 
