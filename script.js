@@ -285,6 +285,29 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
   }
+  // Function to generate the rules section
+  function generateRules() {
+    return `
+      <div class="rules">
+        <h3>Rules for Point Calculation</h3>
+        <ul>
+          <li>🏆 <b>Tagging Points:</b> When a player tags another player, they receive points based on the previous holder's ranking:</li>
+          <ul>
+            <li>1st place: +50 points</li>
+            <li>2nd place: +40 points</li>
+            <li>3rd place: +30 points</li>
+            <li>4th place: +20 points</li>
+            <li>5th place: +10 points</li>
+            <li>6th place and below: +5 points</li>
+          </ul>
+          <li>⏳ <b>Holding Time Penalty:</b> Players lose <b>5 points per full hour</b> they hold the tag.</li>
+          <li>🎁 <b>Bonus for Untagged Days:</b> If a player is not tagged for a day and was also not tagged the day before or after, they receive <b>+35 bonus points.</b></li>
+          <li>⚠️ <b>Special Achievements:</b> Some players may receive unique achievements based on their in-game actions.</li>
+        </ul>
+      </div>
+    `;
+  }
+  
   setInterval(updateCountdown, 1000);
   updateCountdown();
 
@@ -300,6 +323,8 @@ document.addEventListener("DOMContentLoaded", () => {
         leaderboardContainer.innerHTML = generateLeaderboard();
         const achievementsList = document.getElementById("achievements-list");
         achievementsList.innerHTML = calculateAchievements(data);
+        const rulesContainer = document.getElementById("rules");
+        rulesContainer.innerHTML = generateRules();
       })
       .catch((error) => console.error("Error loading the file:", error));
 
