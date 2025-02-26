@@ -77,18 +77,23 @@ document.addEventListener("DOMContentLoaded", () => {
       .map((row) => {
         const [date, time, player] = row.split(",").map((item) => item.trim());
         const currentYear = 2025;
-        const [day, month] = date.split(".");
-        // Format date as "month-day-year time" for parsing
-        const formattedDateString = `${month}-${day}-${currentYear} ${time}`;
-        const timeTagged = new Date(formattedDateString);
+        // Split date and remove any empty strings (in case of trailing dots)
+        const [day, month] = date.split(".").filter(Boolean);
+        // Split the time string into hours and minutes
+        const [hourStr, minuteStr] = time.split(":");
+        const hours = parseInt(hourStr, 10);
+        const minutes = parseInt(minuteStr, 10);
+        // Create the date with numeric parameters (month is zero-indexed)
+        const timeTagged = new Date(currentYear, month - 1, day, hours, minutes);
         if (isNaN(timeTagged)) {
-          console.error(`Invalid date and time: ${formattedDateString}`);
+          console.error(`Invalid date for ${date} ${time}`);
           return null;
         }
         return { DATETIME: timeTagged, MENO: player };
       })
       .filter((entry) => entry !== null);
   }
+  
 
   // Process a single tag transition from previousEntry to currentEntry
   function processTransition(previousEntry, currentEntry) {
