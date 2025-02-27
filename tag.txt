@@ -38,3 +38,5 @@
 26.2.,22:12,Jan Brecka
 26.2.,22:12,Pavol Nagy 
 26.2.,22:12,Jakub Novak
+26.2.,23:10,Jakub Huscava
+26.2.,23:10,Marek Kossey
